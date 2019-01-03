@@ -47,7 +47,7 @@ DotNetCli.Pack(fun p -> { p with Project = packSlnFile })
 
 ## Using it in your build scripts
 
-Can be referenced using paket's github facility. In your `paket.dependencies`:
+Can be referenced using paket's [github facility](https://fsprojects.github.io/Paket/github-dependencies.html). In your `paket.dependencies`:
 ```
 github eiriktsarpalis/snippets SlnTools/SlnTools.fs
 ```
