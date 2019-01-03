@@ -109,7 +109,7 @@ let createTempSolutionFile (projects : seq<string>) : string =
 
 /// Validates that projects in solution file exist and have consistent structure
 let validateSolution (sln : string) =
-    let projects = Project.Parse sln
+    let projects = Project.FromSolutionFile sln
     let validateProject (project : Project) =
         if not <| File.Exists project.ProjectFile then
             failwithf "project file %A in solution file %A could not be found" project.ProjectFile sln
