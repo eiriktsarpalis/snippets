@@ -44,3 +44,10 @@ let packSlnFile = !! "baseDir/src/**/*.??proj" |> SlnTools.createTempSolutionFil
 
 DotNetCli.Pack(fun p -> { p with Project = packSlnFile })
 ```
+
+## Using it in your build scripts
+
+Can be referenced using paket's github facility. In your `paket.dependencies`:
+```
+github eiriktsarpalis/snippets SlnTools/SlnTools.fs
+```
