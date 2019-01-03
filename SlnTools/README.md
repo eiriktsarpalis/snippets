@@ -17,7 +17,7 @@ All this tends to be intractable as number of projects (and team members!) incre
 
 `SlnTools.fs` provides a solution (pun intended!) to this problem,
 when building dotnet SDK projects using FAKE. 
-It effectively treats solution files as an ephemeral container for project sets.
+It effectively provides solution files treated as ephemeral containers for project sets.
 For instance, assuming I wanted to recursively build all projects within a folder:
 ```fsharp
 #load "SlnTools.fs"
