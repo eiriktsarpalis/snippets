@@ -7,7 +7,7 @@ open System
 open System.IO
 open System.Text.RegularExpressions
 
-let fsharpProjectTypeGuid = Guid.Parse "6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705"
+let private fsharpProjectTypeGuid = Guid.Parse "6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705"
 
 type Project =
     {
@@ -17,9 +17,11 @@ type Project =
         ProjectFile : string
     }
 with
-    static member Parse (sln : string) =
+    /// Reads and parses the contents of a solution file,
+    /// returning an array of project definitions
+    static member FromSolutionFile (sln : string) =
         let contents = File.ReadAllText sln
-        let projectRegex = "Project\(\"\{(.+)\}\"\) = \"(.+)\", \"(.+\.??proj)\", \"\{(.+)\}"
+        let projectRegex = "Project\(\"\{(.+)\}\"\) = \"(.+)\", \"(.+\...proj)\", \"\{(.+)\}"
         let matches = Regex.Matches(contents, projectRegex)
         let parse (m : Match) =
             {
@@ -36,6 +38,7 @@ with
         try matches |> Seq.cast<Match> |> Seq.map parse |> Seq.toArray
         with e -> failwithf "failed to parse sln %s error: %O" sln e
 
+    /// Generates a placeholder project definition from a project file path
     static member FromProjectFile(projFile : string) =
         {
             ProjectTypeGuid = fsharpProjectTypeGuid 
@@ -44,6 +47,7 @@ with
             ProjectFile = projFile
         }
 
+/// Formats the contents of a solution file using a list of projects
 let formatSolutionFile (projects : seq<Project>) = 
     let projects = Seq.toArray projects
     seq {
