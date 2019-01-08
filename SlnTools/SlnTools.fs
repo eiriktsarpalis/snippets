@@ -93,7 +93,25 @@ let formatSolutionFile (projects : seq<Project>) =
 
 /// Creates a minimal solution file containing all projects in the list
 let createSolutionFile (targetSln : string) (projects : seq<string>) =
-    let contents = projects |> Seq.map Project.FromProjectFile |> formatSolutionFile
+    let slnRegex = 
+        let slnDir = targetSln |> Path.GetDirectoryName |> Path.GetFullPath
+        let sep = string Path.DirectorySeparatorChar
+        let normalizedSlnDir =
+            if slnDir.EndsWith sep then slnDir
+            else slnDir + sep
+
+        Regex("^" + Regex.Escape normalizedSlnDir)
+
+    let normalizeProjectFile (proj : string) =
+        let fullPath = Path.GetFullPath proj
+        slnRegex.Replace(fullPath, "")
+
+    let contents = 
+        projects 
+        |> Seq.map normalizeProjectFile
+        |> Seq.map Project.FromProjectFile 
+        |> formatSolutionFile
+
     File.WriteAllText(targetSln, contents)
 
 /// Creates a temporary, randomly named solution file containing all
