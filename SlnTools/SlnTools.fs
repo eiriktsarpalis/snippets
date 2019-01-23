@@ -5,9 +5,36 @@ module SlnTools
 
 open System
 open System.IO
+open System.Collections.Generic
 open System.Text.RegularExpressions
 
 let private fsharpProjectTypeGuid = Guid.Parse "6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705"
+
+module Path =
+    /// Given two absolute paths, calculates a target path relative to the source path
+    let getRelativePath (sourcePath : string) (targetPath : string) =
+        // adapted from https://stackoverflow.com/a/22055937/1670977
+        let (==) x y = String.Equals(x, y, StringComparison.InvariantCultureIgnoreCase)
+
+        if not(Path.IsPathRooted sourcePath) then invalidArg "sourcePath" "path must be absolute"
+        if not(Path.IsPathRooted targetPath) then invalidArg "targetPath" "path must be absolute"
+
+        let sourcePaths = (Path.GetFullPath sourcePath).Split(Path.DirectorySeparatorChar)
+        let targetPaths = (Path.GetFullPath targetPath).Split(Path.DirectorySeparatorChar)
+        
+        let overlap =
+            Seq.zip sourcePaths targetPaths
+            |> Seq.takeWhile (fun (l,r) -> l == r)
+            |> Seq.length
+        
+        if overlap = 0 then invalidOp "targetPath must be the same windows volume as sourcePath"
+
+        let relativeTokens = seq {
+            for _ in 1 .. sourcePaths.Length - overlap do yield ".."
+            for i in overlap .. targetPaths.Length - 1 do yield targetPaths.[i]
+        } 
+        
+        String.concat (string Path.DirectorySeparatorChar) relativeTokens
 
 type Project =
     {
@@ -47,8 +74,35 @@ with
             ProjectFile = projFile
         }
 
+/// Calculates the transitive closure of project-2-project references
+let getTransitiveClosure (projects : seq<string>) =
+    // TODO replace with `dotnet list reference`
+    let p2pRegex = Regex("""<\s*ProjectReference\s+Include\s*=\s*"(.+)"\s*/?>""")
+    let getProjectReferences proj =
+        let projectDir = Path.GetDirectoryName proj
+        let xml = File.ReadAllText proj
+
+        p2pRegex.Matches(xml) 
+        |> Seq.cast<Match> 
+        |> Seq.map (fun m -> m.Groups.[1].Value)
+        |> Seq.map (fun r -> Path.Combine(projectDir, r))
+        |> Seq.map Path.GetFullPath
+        |> Seq.toArray
+
+    let remaining = Queue projects
+    let visited = HashSet<string>()
+
+    while remaining.Count > 0 do
+        let proj = remaining.Dequeue()
+        if visited.Add proj then
+            for r in getProjectReferences proj do
+                remaining.Enqueue r
+        
+    Seq.toList visited
+
 /// Formats the contents of a solution file using a list of projects
 let formatSolutionFile (projects : seq<Project>) = 
+    // TODO replace with calls to dotnet sln
     let projects = Seq.toArray projects
     seq {
         let fmtGuid (g:Guid) = g.ToString().ToUpper()
@@ -93,22 +147,12 @@ let formatSolutionFile (projects : seq<Project>) =
 
 /// Creates a minimal solution file containing all projects in the list
 let createSolutionFile (targetSln : string) (projects : seq<string>) =
-    let slnRegex = 
-        let slnDir = targetSln |> Path.GetDirectoryName |> Path.GetFullPath
-        let sep = string Path.DirectorySeparatorChar
-        let normalizedSlnDir =
-            if slnDir.EndsWith sep then slnDir
-            else slnDir + sep
-
-        Regex("^" + Regex.Escape normalizedSlnDir)
-
-    let normalizeProjectFile (proj : string) =
-        let fullPath = Path.GetFullPath proj
-        slnRegex.Replace(fullPath, "")
+    let slnDir = Path.GetFullPath targetSln |> Path.GetDirectoryName
 
     let contents = 
         projects 
-        |> Seq.map normalizeProjectFile
+        |> Seq.map Path.GetFullPath
+        |> Seq.map (Path.getRelativePath slnDir)
         |> Seq.map Project.FromProjectFile 
         |> formatSolutionFile
 
