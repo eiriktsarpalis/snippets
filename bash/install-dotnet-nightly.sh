@@ -56,7 +56,7 @@ installEnvironmentVariables()
     target_sdk_folder=$1
     export PATH=$target_sdk_folder:$PATH
     export DOTNET_ROOT=$target_sdk_folder
-    echo "dotnet sdk path set to $target_sdk_folder"
+    echo "using dotnet sdk $(dotnet --version) from $target_sdk_folder"
 }
 
 INSTALL_FOLDER=/tmp/dotnet-nightly-$(date +%y%m%d)
