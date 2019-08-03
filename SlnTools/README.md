@@ -1,6 +1,8 @@
 # SlnTools.fs
 
-A collection of tools for manipulating solution files. 
+A collection of tools for manipulating solution files.
+
+Deprecated, please use [nosln](https://github.com/eiriktsarpalis/nosln) instead.
 
 ## Motivation
 
