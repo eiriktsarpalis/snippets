@@ -56,6 +56,7 @@ installEnvironmentVariables()
     target_sdk_folder=$1
     export PATH=$target_sdk_folder:$PATH
     export DOTNET_ROOT=$target_sdk_folder
+    export DOTNET_MULTILEVEL_LOOKUP=0
     echo "using dotnet sdk $(dotnet --version) from $target_sdk_folder"
 }
 
