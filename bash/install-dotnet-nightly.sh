@@ -87,11 +87,17 @@ installEnvironmentVariables()
     target_sdk_folder=$1
     export PATH=$target_sdk_folder:$PATH
     export DOTNET_ROOT=$target_sdk_folder
+    export DOTNET_CLI_HOME=$target_sdk_folder
     export DOTNET_MULTILEVEL_LOOKUP=0
     export DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX=2
-    export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+
+    version=$(dotnet --version)
     
-    echo "using dotnet sdk $(dotnet --version) from $target_sdk_folder"
+    # squash welcome message https://github.com/dotnet/cli/issues/12157
+    mkdir -p $target_sdk_folder/.dotnet
+    touch $target_sdk_folder/.dotnet/$version.dotnetFirstUseSentinel
+    
+    echo "using dotnet sdk $version from $target_sdk_folder"
 }
 
 INSTALL_FOLDER=/tmp/dotnet-nightly-$(echo $RELEASE_TRACK | sed -e 's_^release/__')-$(date +%y%m%d)
