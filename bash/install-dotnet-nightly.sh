@@ -2,14 +2,45 @@
 
 if [[ $0 = $_ ]]; then
     # need to source the script, detect if run standalone
-    echo "USAGE: . $0"
-    exit 1
+    echo "USAGE: . $0 <args>"
+    return 1
 fi
 
+usage()
+{
+    echo "Usage:"
+    echo "    -r <track>    Release track to download. Defaults to master, but can also be release/3.0.1xx"
+    echo "    -h            this help text."
+    echo ""
+}
+
+fail()
+{
+    echo "ERROR: $@"
+    echo ""
+    usage
+    return 1
+}
+
+# derived from https://github.com/dotnet/core-sdk/blob/master/README.md#installers-and-binaries
 DOTNET_SDK_NIGHTLY_BUILDS_SOURCE=https://dotnetcli.blob.core.windows.net/dotnet/Sdk
 RELEASE_TRACK=master
-#RELEASE_TRACK=3.0.1xx
-#RELEASE_TRACK=2.2.3xx
+
+OPTIND=1
+while getopts "hr:" opt; do
+    case $opt in
+        r)
+            RELEASE_TRACK=$OPTARG
+            ;;
+        h)
+            usage
+            return 0
+            ;;
+        *)
+            fail "Unrecognized argument"
+            ;;
+    esac
+done
 
 getSdkUrl()
 {
@@ -57,10 +88,13 @@ installEnvironmentVariables()
     export PATH=$target_sdk_folder:$PATH
     export DOTNET_ROOT=$target_sdk_folder
     export DOTNET_MULTILEVEL_LOOKUP=0
+    export DOTNET_ROLL_FORWARD_ON_NO_CANDIDATE_FX=2
+    export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+    
     echo "using dotnet sdk $(dotnet --version) from $target_sdk_folder"
 }
 
-INSTALL_FOLDER=/tmp/dotnet-nightly-$(date +%y%m%d)
+INSTALL_FOLDER=/tmp/dotnet-nightly-$(echo $RELEASE_TRACK | sed -e 's_^release/__')-$(date +%y%m%d)
 
 if [ ! -d $INSTALL_FOLDER ]; then
     installSdkToFolder $INSTALL_FOLDER $(getSdkUrl)
