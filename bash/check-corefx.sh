@@ -9,7 +9,7 @@ else
 fi
 
 FSX_FILE=/tmp/corefx-checker-$RANDOM.fsx
-echo 'let info = System.IO.FileInfo((System.Reflection.Assembly.Load("'$COREFX_ASSEMBLY'")).Location) in printfn "%s, Last modified %O" info.FullName info.LastWriteTime' > $FSX_FILE
+echo 'let info = System.IO.FileInfo((System.Reflection.Assembly.Load("'$COREFX_ASSEMBLY'")).Location) in printfn "%s, Last modified (UTC) %O" info.FullName info.LastWriteTimeUtc' > $FSX_FILE
 dotnet fsi $FSX_FILE
 
 rm -f $FSX_FILE
