@@ -86,7 +86,7 @@ with
 let getTransitiveClosure (projects : seq<string>) =
     // TODO replace with `dotnet list reference`
     let p2pRegex = Regex("""<\s*ProjectReference\s+Include\s*=\s*"(.+)"\s*/?>""")
-    let getProjectReferences proj =
+    let getProjectReferences (proj: string) =
         let projectDir = Path.GetDirectoryName proj
         let xml = File.ReadAllText proj
 
